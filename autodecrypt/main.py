@@ -6,6 +6,7 @@ import argparse
 import decrypt_img
 import fw_utils
 import utils
+import pdb
 
 
 __author__ = "matteyeux"
@@ -36,6 +37,11 @@ def parse_arguments():
         "--build",
         dest="build",
         help="build ID to set instead of iOS version",
+    )
+    parser.add_argument(
+        "--board",
+        dest="board",
+        help="Device board for example N66AP or N66mAP for iPhone 6S Plus",
     )
     parser.add_argument(
         "-p",
@@ -70,12 +76,24 @@ def main():
     json_data = fw_utils.get_json_data(parser.device)
 
     if build is None:
-        build = fw_utils.get_build_id(json_data, parser.ios_version)
+        build = utils.get_build_from_ipsw(parser.device, parser.ios_version)
 
     board_filename=utils.board_filter(parser, json_data, build)
 
+    if len(board_filename) == 0:
+        print("No board scrapped from device page")
+        return -1
+
+    if parser.board is not None:
+        board_filename = [s for s in board_filename
+                if parser.board == s.replace('.RELEASE.im4p', '').replace('iBSS.','')]
+
+        if len(board_filename) == 0:
+            print("Specified board is invalid")
+            return -1
+
     if len(board_filename) > 1:
-        print("Too many boards, exiting")
+        print("Too many boards scrapped from device info page, try specifying the board")
         return -1
     else:
         board_filename = board_filename[0]

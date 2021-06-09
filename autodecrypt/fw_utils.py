@@ -2,6 +2,7 @@
 import os
 import shutil
 import sys
+import pdb
 
 import requests
 from bs4 import BeautifulSoup
@@ -74,10 +75,10 @@ def get_json_data(model: str, fw_type: str = "ota") -> dict:
     return resp.json()
 
 
-def get_firmware_url(json_data: dict, buildid: str) -> str:
+def get_firmware_url(json_data: dict, ios_version: str):
     """Return URL of IPSW file."""
     for firmware in json_data["firmwares"]:
-        if firmware["buildid"] == buildid:
+        if firmware["version"] == ios_version:
             return firmware["url"]
     return None
 
@@ -100,7 +101,7 @@ def get_build_id(json_data: dict, ios_vers: str, fw_type: str = "ota") -> str:
         if fw_type == "ota":
             release = firmware["releasetype"]
 
-        if ios_vers in curent_vers and release == "":
+        if ios_vers == curent_vers and release == "":
             return firmware["buildid"]
 
 

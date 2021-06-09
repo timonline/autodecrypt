@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from typing import Tuple
+import pdb
 
 import decrypt_img
 import fw_utils
@@ -63,14 +64,18 @@ def grab_key_from_pongo(img_file: str):
     return ivkey
 
 
+def get_build_from_ipsw(device: str, ios_vers: str):
+    json_data_tmp = fw_utils.get_json_data(device, "ipsw")
+    build = fw_utils.get_build_id(json_data_tmp, ios_vers, "ipsw")
+
+    return build
+
+
 def get_ipsw_url(device, ios_version, build):
     """Get URL of IPSW by specifying device and iOS version."""
     json_data = fw_utils.get_json_data(device, "ipsw")
 
-    if build is None:
-        build = fw_utils.get_build_id(json_data, ios_version, "ipsw")
-
-    fw_url = fw_utils.get_firmware_url(json_data, build)
+    fw_url = fw_utils.get_firmware_url(json_data, ios_version)
 
     if fw_url is None:
         print("[w] could not get IPSW url, exiting...")
@@ -95,6 +100,11 @@ def board_filter(parser: argparse.Namespace, json_data: dict, build: str) -> str
     if image_name is None:
         print("[e] image type not found")
 
+    if build is None:
+        json_data_tmp = fw_utils.get_json_data(parser.device, "ipsw")
+        build = fw_utils.get_build_id(json_data_tmp, parser.ios_version, "ipsw")
+
+
     for board in board_names:
         ivkey_tmp = scrapkeys.getkeys(parser.device, build, board)
 
@@ -107,7 +117,7 @@ def board_filter(parser: argparse.Namespace, json_data: dict, build: str) -> str
 
 def get_fw_ipsw_url(parser: argparse.Namespace, json_data: dict) -> str:
     """Download file from IPSW or OTA."""
-    fw_url = fw_utils.get_firmware_url(json_data, parser.build)
+    fw_url = fw_utils.get_firmware_url(json_data, parser.ios_version)
     if fw_url is None:
         print("[w] could not get OTA url, trying with IPSW url")
         fw_url = get_ipsw_url(parser.device, parser.ios_version, parser.build)
